@@ -41,10 +41,12 @@ let main () =
   (* The open of a file *)
   let cin = if Array.length Sys.argv > 1 then open_in Sys.argv.(1)
             else stdin in
-                let lexbuf = Lexing.from_channel cin in
+  let lexbuf = Lexing.from_channel cin in
   (* The start of the entire program *)
+                try
                    print_string (ast_stmt (Parser.prog Lexer.lexer lexbuf)); 
                    print_string "\n"
+                with
+                        | Parsing.Parse_error -> print_string (Printf.sprintf "Syntax error at line %d, before \"%s\"\n" !Lexer.line_num (Lexing.lexeme lexbuf))
 
-let _ = try main () with 
-         Parsing.Parse_error -> print_string "syntax error\n"
+let _ = main () 

@@ -1,8 +1,6 @@
 %{
-
 open Printf
 open Ast
-
 %}
 
 /* File parser.mly */
@@ -17,6 +15,7 @@ open Ast
 %left PLUS MINUS         /* lowest precedence */
 %left TIMES DIV         /* medium precedence */
 %nonassoc UMINUS      /* highest precedence */
+
 
 
 %start prog           /* the entry point */
@@ -102,5 +101,5 @@ cond : expr EQ expr  { CallFunc ("==", [$1; $3]) }
      | expr LT expr  { CallFunc ("<", [$1; $3]) }
      | expr GE expr  { CallFunc (">=", [$1; $3]) }
      | expr LE expr  { CallFunc ("<=", [$1; $3]) }
-     ;
+     ;   
 %%

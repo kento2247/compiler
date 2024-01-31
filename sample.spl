@@ -1,6 +1,8 @@
 {
 	int a, b, m, n, r;
         // hello world
+        // #include
+        int ;
 
         sprint ("You must give 2 integers.\n");
         sprint ("First integer: ");

@@ -1,7 +1,8 @@
 (* File lexer.mll *)
 {
  open Parser  
- exception No_such_symbol
+ exception No_such_symbol of string
+ let line_num = ref 1
 }
 
 let digit = ['0'-'9']
@@ -21,7 +22,7 @@ rule lexer = parse
 | "void"                  { VOID }
 | id as text              { ID text }
 | '\"'[^'\"']*'\"' as str { STR str }
-| "//"[^'\n']*            { lexer lexbuf}
+| "//"[^'\n']*            { lexer lexbuf; }
 | '='                     { ASSIGN }
 | "=="                    { EQ }
 | "!="                    { NEQ }
@@ -41,6 +42,11 @@ rule lexer = parse
 | ')'                     { RP  }
 | ','                     { COMMA }
 | ';'                     { SEMI }
-| [' ' '\t' '\n']         { lexer lexbuf }(* eat up whitespace *) 
+| '\n'                    { incr line_num; lexer lexbuf; }
+| [' ' '\t']              { lexer lexbuf } (* eat up whitespace *)
 | eof                     { raise End_of_file }
-| _                       { raise No_such_symbol }
+| _                       {
+                            let lexeme = Lexing.lexeme lexbuf in
+                            let message = Printf.sprintf "at line %d, before \"%s\"\n" !line_num lexeme in
+                            raise (No_such_symbol message)
+                          }
