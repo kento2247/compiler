@@ -41,118 +41,21 @@ L3:	.string "Second integer: "
 	movq (%rax), %rax
 	pushq %rax
 	movq %rbp, %rax
-	leaq -24(%rax), %rax
-	popq (%rax)
-	movq %rbp, %rax
 	leaq -16(%rax), %rax
 	movq (%rax), %rax
 	pushq %rax
-	movq %rbp, %rax
-	leaq -32(%rax), %rax
-	popq (%rax)
-	movq %rbp, %rax
-	leaq -24(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
-	movq %rbp, %rax
-	leaq -24(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
-	movq %rbp, %rax
-	leaq -32(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
 	popq %rbx
 	popq %rax
 	cqto
 	idivq %rbx
-	pushq %rax
-	movq %rbp, %rax
-	leaq -32(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
-	popq %rax
-	imulq (%rsp), %rax
-	movq %rax, (%rsp)
-	popq %rax
-	subq %rax, (%rsp)
-	movq %rbp, %rax
-	leaq -40(%rax), %rax
-	popq (%rax)
-	movq %rbp, %rax
-	leaq -32(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
+	pushq %rdx
 	movq %rbp, %rax
 	leaq -24(%rax), %rax
 	popq (%rax)
-	movq %rbp, %rax
-	leaq -40(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
-	movq %rbp, %rax
-	leaq -32(%rax), %rax
-	popq (%rax)
-L5:
-	movq %rbp, %rax
-	leaq -40(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
-	pushq $0
-	popq %rax
-	popq %rbx
-	cmpq %rax, %rbx
-	jle L4
-	subq $16, %rsp
-	movq %rbp, %rax
-	leaq -24(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
-	movq %rbp, %rax
-	leaq -24(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
-	movq %rbp, %rax
-	leaq -32(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
-	popq %rbx
-	popq %rax
-	cqto
-	idivq %rbx
-	pushq %rax
-	movq %rbp, %rax
-	leaq -32(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
-	popq %rax
-	imulq (%rsp), %rax
-	movq %rax, (%rsp)
-	popq %rax
-	subq %rax, (%rsp)
-	movq %rbp, %rax
-	leaq -40(%rax), %rax
-	popq (%rax)
-	movq %rbp, %rax
-	leaq -32(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
-	movq %rbp, %rax
-	leaq -24(%rax), %rax
-	popq (%rax)
-	movq %rbp, %rax
-	leaq -40(%rax), %rax
-	movq (%rax), %rax
-	pushq %rax
-	movq %rbp, %rax
-	leaq -32(%rax), %rax
-	popq (%rax)
-	jmp L5
-L4:
 	.data
-L6:	.string "Answer = "
+L4:	.string "Answer = "
 	.text
-	leaq L6(%rip), %rdi
+	leaq L4(%rip), %rdi
 	movq $0, %rax
 	callq printf
 	movq %rbp, %rax
@@ -164,9 +67,9 @@ L6:	.string "Answer = "
 	movq $0, %rax
 	callq printf
 	.data
-L7:	.string "\n"
+L5:	.string "\n"
 	.text
-	leaq L7(%rip), %rdi
+	leaq L5(%rip), %rdi
 	movq $0, %rax
 	callq printf
 	leaveq

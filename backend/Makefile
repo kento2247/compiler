@@ -28,4 +28,3 @@ print_ast: $(FILE) print_ast
 
 clean:
 	rm  -f *.cmi *.cmo parser.ml lexer.ml parser.mli simc print_ast
-

@@ -1,5 +1,3 @@
-
-
 (* The definition of the abstract syntax tree *)
 type id = string
 type var = Var of id | IndexedVar of var * exp
