@@ -21,6 +21,7 @@ rule lexer = parse
 | "void"                  { VOID }
 | id as text              { ID text }
 | '\"'[^'\"']*'\"' as str { STR str }
+| "//"[^'\n']*            { lexer lexbuf}
 | '='                     { ASSIGN }
 | "=="                    { EQ }
 | "!="                    { NEQ }
