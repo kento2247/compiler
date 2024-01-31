@@ -12,6 +12,8 @@ rule lexer = parse
 | digit+ as num  { NUM (int_of_string num) }
 | "if"                    { IF }
 | "else"                  { ELSE }
+| "for"                   { FOR }
+| "do"                    { DO }
 | "while"                 { WHILE }
 | "scan"                  { SCAN }
 | "sprint"                { SPRINT }
@@ -30,13 +32,16 @@ rule lexer = parse
 | '<'                     { LT }
 | ">="                    { GE }
 | "<="                    { LE }
+| "++"                    { INC }
+| "+="                    { ADD_EQ }
 | '+'                     { PLUS }
 | '-'                     { MINUS }
 | '*'                     { TIMES }
 | '/'                     { DIV }
 | '%'                     { MOD }
-| '{'                     { LB  }
-| '}'                     { RB  }
+| "^"                     { POW }
+| '{'                     { LB }
+| '}'                     { RB }
 | '['                     { LS }
 | ']'                     { RS }
 | '('                     { LP  }
@@ -48,6 +53,6 @@ rule lexer = parse
 | eof                     { raise End_of_file }
 | _                       {
                             let lexeme = Lexing.lexeme lexbuf in
-                            let message = Printf.sprintf "at line %d, before \"%s\"\n" !line_num lexeme in
+                            let message = Printf.sprintf "at line %d, before '%s'\n" !line_num lexeme in
                             raise (No_such_symbol message)
                           }

@@ -8,7 +8,12 @@ open Ast
 %token <string> STR ID
 %token INT IF WHILE SPRINT IPRINT SCAN EQ NEQ GT LT GE LE ELSE RETURN NEW
 %token PLUS MINUS TIMES DIV LB RB LS RS LP RP ASSIGN SEMI COMMA TYPE VOID
-%token MOD
+%token MOD 
+%token POW
+%token INC
+%token ADD_EQ
+%token DO
+%token FOR
 %type <Ast.stmt> prog
 
 
@@ -93,6 +98,9 @@ expr : NUM { IntExp $1  }
      | expr TIMES expr { CallFunc ("*", [$1; $3]) }
      | expr DIV expr { CallFunc ("/", [$1; $3]) }
      | expr MOD expr { CallFunc ("%", [$1; $3]) }
+     | expr POW expr { CallFunc ("^", [$1; $3]) }
+     | expr INC { CallFunc ("++", [$1]) }
+     | expr ADD_EQ expr { CallFunc ("+=", [$1; $3]) }
      | MINUS expr %prec UMINUS { CallFunc("!", [$2]) }
      | LP expr RP  { $2 }
      ;

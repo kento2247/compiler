@@ -110,6 +110,10 @@ and type_exp ast env =
         match ast with
             VarExp s -> type_var s env
           | IntExp i -> INT
+          | CallFunc ("++", [arg]) -> 
+               (check_int (type_exp arg env); INT)
+          | CallFunc ("+=", [left; right]) ->
+               (check_int (type_exp left env); check_int(type_exp right env); INT)
           | CallFunc ("+", [left; right]) -> 
                (check_int (type_exp left env); check_int(type_exp right env); INT)
           | CallFunc ("-", [left; right]) -> 
@@ -119,6 +123,8 @@ and type_exp ast env =
           | CallFunc ("/", [left; right]) -> 
                (check_int (type_exp left env); check_int(type_exp right env); INT)
           | CallFunc ("%", [left; right]) -> 
+               (check_int (type_exp left env); check_int(type_exp right env); INT)
+          | CallFunc ("^", [left; right]) -> 
                (check_int (type_exp left env); check_int(type_exp right env); INT)
           | CallFunc ("!", [arg]) -> 
                (check_int (type_exp arg env); INT)

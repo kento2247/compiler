@@ -214,6 +214,34 @@ and trans_exp ast nest env = match ast with
                                           ^ "\tcqto\n"
                                           ^ "\tidivq %rbx\n"
                                           ^ "\tpushq %rdx\n"
+
+                  (* ^のコード *)
+                  | CallFunc ("^", [left; right]) ->
+                                            trans_exp left nest env
+                                          ^ trans_exp right nest env
+                                          ^ "\tpopq %rbx\n"
+                                          ^ "\tpopq %rax\n"
+                                          ^ "\tmovq $1, %rdx\n"
+                                          ^ "factorial_loop" ^ string_of_int nest ^ ":\n"
+                                          ^ "\tcmpq $0, %rbx\n"
+                                          ^ "\tje factorial_end" ^ string_of_int nest ^ "\n"
+                                          ^ "\timulq %rax, %rdx\n"
+                                          ^ "\tdecq %rbx\n"
+                                          ^ "\tjmp factorial_loop" ^ string_of_int nest ^ "\n"
+                                          ^ "factorial_end" ^ string_of_int nest ^ ":\n"
+                                          ^ "\tpushq %rdx\n"
+                (* ++のコード *)
+                | CallFunc ("++", [VarExp v]) ->
+                                          trans_var v nest env
+                                          ^ "\tincq (%rax)\n"
+                (* +=のコード *)
+                | CallFunc ("+=", [left; right]) ->
+                                             trans_exp left nest env
+                                            ^ trans_exp right nest env
+                                            ^ "\tpopq %rax\n"
+                                            ^ "\tpopq %rbx\n"
+                                            ^ "\taddq %rax, (%rbx)\n"
+
                   (* 反転のコード *)
                   | CallFunc("!",  arg::_) -> 
                                              trans_exp arg nest env
@@ -247,6 +275,7 @@ and trans_cond ast nest env = match ast with
                               | "<=" -> (code ^ sprintf "\tjg L%d\n" l, l)
                               | _ -> ("",0))
                  | _ -> raise (Err "internal error")
+
 (* プログラム全体の生成 *)
 let trans_prog ast = let code = trans_stmt ast 0 initTable initTable in
                                 io ^ header ^ code ^ epilogue ^ (!output)

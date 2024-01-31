@@ -1,31 +1,23 @@
 {
-	int a, b, m, n, r;
-        // hello world
-        // #include
-        // int ;
+   int x, rlt;
 
-        sprint ("You must give 2 integers.\n");
-        sprint ("First integer: ");
-        scan  (a);
-        sprint ("Second integer: ");
-        scan (b);
+   //印字
+   rlt = 1;
+   iprint(rlt);
+   sprint("\n");
 
-        m = a % b;
+   //MOD
+   rlt = 5%2;
+   iprint(rlt);
+   sprint("\n");
 
-        // m = a; 
-        // n = b;
-        // r = m - (m / n) * n;
-        // m = n;
-        // n = r;
-	// while (r > 0) {
-                // r = m - (m / n) * n;
+   //^
+   rlt = 5^2;
+   iprint(rlt);
+   sprint("\n");
 
-                // m = n;
-                // n = r;
-	// }
-        sprint ("Answer = ");
-        iprint (m) ;
-        sprint ("\n");
+   //+=
+   rlt += 2;
+   iprint(rlt);
+   sprint("\n");
 }
-
-
