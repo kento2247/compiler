@@ -9,6 +9,8 @@
 
 ### Frontend
 
+     | INT ID ASSIGN expr SEMI { [VarDec (IntTyp, [$2, $4]); Assign (Var $2, $4)]}
+
 - [x] 1. 単行コメントアウト
 - [x] 2. 構文エラー時に行番号と直後の字句を印字
 - [ ] 3. error トークンの挿入
@@ -18,10 +20,10 @@
 - [x] 1. MOD の実装
 - [ ] 2. 変数宣言と初期化を同時に行う
 - [x] 3. ^の実装
-- [ ] 4. ++の実装
-- [ ] 5. +=の実装
+- [x] 4. ++の実装
+- [x] 5. +=の実装
 - [x] 6. do while の実装
-- [ ] 7. for の実装
+- [x] 7. for の実装
 - [ ] 8. return 時の型検査の実装
 
 ## 1. Frontend
@@ -254,5 +256,63 @@
      ```
 
 7. for の実装
+
+   - emitter.ml に以下のコードを追加
+
+     ```ocaml
+     (* For文のコード *)
+                  | For (v, e1, e2, s) ->
+                                    let l1 = incLabel() in
+                                    let l2 = incLabel() in
+                                    trans_exp e1 nest env
+                                    ^ trans_var v nest env
+                                    ^ "\tpopq (%rax)\n"
+                                    ^ sprintf "L%d:\n" l1
+                                    ^ trans_exp e2 nest env
+                                    ^ "\tpopq %rbx\n"
+                                    ^ trans_var v nest env
+                                    ^ "\tcmpq (%rax), %rbx\n"
+                                    ^ sprintf "\tje L%d\n" l2
+                                    ^ trans_stmt s nest tenv env
+                                    ^ trans_var v nest env
+                                    ^ "\taddq $1, (%rax)\n"
+                                    ^ sprintf "\tjmp L%d\n" l1
+                                    ^ sprintf "L%d:\n" l2
+     ```
+
+     - (%rax)にアクセスする前に、trans_var で rax に変数のアドレスを入れ直す方が安全であると判断
+       ```ocaml
+       ^ trans_var v nest env
+       ^ "\tcmpq (%rax), %rbx\n"
+       ```
+
+   - lexer.mll の rule に以下のコードを追加
+     ```ocaml
+     | "for"                   { FOR }
+     ...
+     | ".."                    { TO }
+     ```
+     > [!NOTE]  
+     > ".."の宣言位置が FOR の直後だと、なぜか実行時に segmentation fault した。そのため SEMI の直後に移動した。
+   - parser.mly に以下のコードを追加
+     ```ocaml
+     %token FOR
+     %token TO
+     ...
+     stmt: ...
+     | FOR LP ID ASSIGN expr TO expr RP stmt { For ((Var $3), $5, $7, $9) }
+     ```
+   - semant.ml の type_stmt に以下のコードを追加
+     ```ocaml
+     | For (v, e1, e2, s) ->
+               if (type_var v env) != INT then raise (TypeErr "type error 4");
+               if (type_exp e1 env) != INT then raise (TypeErr "type error 4");
+               if (type_exp e2 env) != INT then raise (TypeErr "type error 4");
+               type_stmt s env
+     ```
+   - ast.ml の stmt に以下のコードを追加
+     ```ocaml
+     | For of var * exp * exp * stmt
+     ```
 
 8. return 時の型検査の実装

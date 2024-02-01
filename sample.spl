@@ -1,6 +1,7 @@
 {
    int x, rlt;
 
+
    //印字
    rlt = 1;
    iprint(rlt);
@@ -20,4 +21,24 @@
    rlt += 2;
    iprint(rlt);
    sprint("\n");
+
+   //++
+   rlt++;
+   rlt++;
+   iprint(rlt);
+   sprint("\n");
+
+   //do while
+   rlt = 0;
+   do{
+      rlt = rlt + 1;
+      iprint(rlt);
+      sprint("\n");
+   }while(rlt < 5);
+
+   //for
+   for (x = 0 .. 5) {
+      iprint(x);
+      sprint("\n");
+   }
 }
