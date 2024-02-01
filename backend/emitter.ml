@@ -52,7 +52,9 @@ let rec trans_dec ast nest tenv env = match ast with
                  ^ code                  (* 本体コード *)
                  ^ epilogue              (* エピローグ *)
    (* 変数宣言の処理 *)
- | VarDec (t,s) -> ()
+ | VarDec (t, s) -> ()
+   (* 初期値付き変数宣言の処理 *)
+   
    (* 型宣言の処理 *)
  | TypeDec (s,t) -> 
       let entry = tenv s in
@@ -151,8 +153,22 @@ and trans_stmt ast nest tenv env =
                                        ^ trans_stmt s nest tenv env
                                        ^ sprintf "\tjmp L%d\n" l2
                                        ^ sprintf "L%d:\n" l1
+                  (* do while文のコード *)
+                  | DoWhile (e,s) -> let (condCode, l1) = trans_cond e nest env in
+                                     let l2 = incLabel() in
+                                         sprintf "L%d:\n" l2
+                                       ^ trans_stmt s nest tenv env 
+                                       ^ condCode
+                                       ^ sprintf "\tjmp L%d\n" l2
+                                       ^ sprintf "L%d:\n" l1
                   (* 空文 *)
                   | NilStmt -> ""
+                  (* +=のコード *)
+                  | AddEq (v, e) ->
+                        trans_exp e nest env
+                        ^ trans_var v nest env
+                        ^ "\tpopq %rbx\n"
+                        ^ "\taddq %rbx, (%rax)\n"
 (* 参照アドレスの処理 *)
 and trans_var ast nest env = match ast with
                    Var s -> let entry = env s in 
@@ -230,17 +246,14 @@ and trans_exp ast nest env = match ast with
                                           ^ "\tjmp factorial_loop" ^ string_of_int nest ^ "\n"
                                           ^ "factorial_end" ^ string_of_int nest ^ ":\n"
                                           ^ "\tpushq %rdx\n"
-                (* ++のコード *)
-                | CallFunc ("++", [VarExp v]) ->
-                                          trans_var v nest env
-                                          ^ "\tincq (%rax)\n"
-                (* +=のコード *)
-                | CallFunc ("+=", [left; right]) ->
-                                             trans_exp left nest env
-                                            ^ trans_exp right nest env
-                                            ^ "\tpopq %rax\n"
-                                            ^ "\tpopq %rbx\n"
-                                            ^ "\taddq %rax, (%rbx)\n"
+                  (* ++のコード *)
+                  | Incr v ->
+                        trans_var v nest env
+                        ^ "\tpopq %rax\n"
+                        ^ "\tmovq (%rax), %rbx\n"
+                        ^ "\tincq %rax\n"
+                        ^ "\tpushq %rbx\n"
+                  
 
                   (* 反転のコード *)
                   | CallFunc("!",  arg::_) -> 

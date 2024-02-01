@@ -1,0 +1,142 @@
+IO:
+	.string "%lld"
+	.text
+	.globl main
+main:
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $32, %rsp
+	pushq $1
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	popq (%rax)
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	movq (%rax), %rax
+	pushq %rax
+	popq  %rsi
+	leaq IO(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	.data
+L1:	.string "\n"
+	.text
+	leaq L1(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	pushq $5
+	pushq $2
+	popq %rbx
+	popq %rax
+	cqto
+	idivq %rbx
+	pushq %rdx
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	popq (%rax)
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	movq (%rax), %rax
+	pushq %rax
+	popq  %rsi
+	leaq IO(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	.data
+L2:	.string "\n"
+	.text
+	leaq L2(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	pushq $5
+	pushq $2
+	popq %rbx
+	popq %rax
+	movq $1, %rdx
+factorial_loop0:
+	cmpq $0, %rbx
+	je factorial_end0
+	imulq %rax, %rdx
+	decq %rbx
+	jmp factorial_loop0
+factorial_end0:
+	pushq %rdx
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	popq (%rax)
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	movq (%rax), %rax
+	pushq %rax
+	popq  %rsi
+	leaq IO(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	.data
+L3:	.string "\n"
+	.text
+	leaq L3(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	pushq $2
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	popq %rbx
+	addq %rbx, (%rax)
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	movq (%rax), %rax
+	pushq %rax
+	popq  %rsi
+	leaq IO(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	.data
+L4:	.string "\n"
+	.text
+	leaq L4(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	pushq $0
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	popq (%rax)
+L6:
+	subq $16, %rsp
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	movq (%rax), %rax
+	pushq %rax
+	pushq $1
+	popq %rax
+	addq %rax, (%rsp)
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	popq (%rax)
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	movq (%rax), %rax
+	pushq %rax
+	popq  %rsi
+	leaq IO(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	.data
+L7:	.string "\n"
+	.text
+	leaq L7(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	movq (%rax), %rax
+	pushq %rax
+	pushq $5
+	popq %rax
+	popq %rbx
+	cmpq %rax, %rbx
+	jge L5
+	jmp L6
+L5:
+	leaveq
+	retq

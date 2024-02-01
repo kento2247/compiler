@@ -19,7 +19,7 @@ open Ast
 
 %nonassoc GT LT EQ NEQ GE LE
 %left PLUS MINUS         /* lowest precedence */
-%left TIMES DIV MOD         /* medium precedence */
+%left TIMES DIV MOD      /* medium precedence */
 %nonassoc UMINUS      /* highest precedence */
 
 
@@ -68,6 +68,7 @@ stmt : ID ASSIGN expr SEMI    { Assign (Var $1, $3) }
      | IF LP cond RP stmt ELSE stmt 
                               { If ($3, $5, Some $7) }
      | WHILE LP cond RP stmt  { While ($3, $5) }
+     | DO stmt WHILE LP cond RP { DoWhile ($5, $2) }
      | SPRINT LP STR RP SEMI  { CallProc ("sprint", [StrExp $3]) }
      | IPRINT LP expr RP SEMI { CallProc ("iprint", [$3]) }
      | SCAN LP ID RP SEMI  { CallProc ("scan", [VarExp (Var $3)]) }
@@ -76,6 +77,7 @@ stmt : ID ASSIGN expr SEMI    { Assign (Var $1, $3) }
      | RETURN expr SEMI    { CallProc ("return", [$2]) }
      | block { $1 }
      | SEMI { NilStmt }
+     | ID ADD_EQ expr SEMI { AddEq ((Var $1), $3) }
      ;
 
 aargs_opt: /* empty */     { [] }
@@ -93,14 +95,13 @@ expr : NUM { IntExp $1  }
      | ID { VarExp (Var $1) }
      | ID LP aargs_opt RP { CallFunc ($1, $3) } 
      | ID LS expr RS  { VarExp (IndexedVar (Var $1, $3)) }
+     | ID INC { Incr (Var $1) }
      | expr PLUS expr { CallFunc ("+", [$1; $3]) }
      | expr MINUS expr { CallFunc ("-", [$1; $3]) }
      | expr TIMES expr { CallFunc ("*", [$1; $3]) }
      | expr DIV expr { CallFunc ("/", [$1; $3]) }
      | expr MOD expr { CallFunc ("%", [$1; $3]) }
      | expr POW expr { CallFunc ("^", [$1; $3]) }
-     | expr INC { CallFunc ("++", [$1]) }
-     | expr ADD_EQ expr { CallFunc ("+=", [$1; $3]) }
      | MINUS expr %prec UMINUS { CallFunc("!", [$2]) }
      | LP expr RP  { $2 }
      ;

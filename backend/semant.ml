@@ -62,6 +62,8 @@ let rec type_dec ast (nest,addr) tenv env =
     (* 変数宣言の処理 *)
     | VarDec (t,s) -> (tenv, 
               update s (VarEntry {ty= create_ty t tenv; offset=addr-8; level=nest}) env, addr-8)
+    (* 初期値付き変数宣言の処理 *)
+
     (* 型宣言の処理 *)
     | TypeDec (s,t) -> let tenv' = update s (NAME (s,ref None)) tenv in (tenv', env, addr)
     | _ -> raise (Err "internal error")
@@ -94,7 +96,11 @@ and type_stmt ast env =
                if (type_var v env) != (type_exp e env) then raise (TypeErr "type error 4")
           | If (e,_,_) -> type_cond e env
           | While (e,_) -> type_cond e env
+          | DoWhile (e,_) -> type_cond e env
           | NilStmt -> ()
+          | AddEq (v, e) -> 
+               if (type_var v env) != INT then raise (TypeErr "type error 4");
+               if (type_exp e env) != INT then raise (TypeErr "type error 4");
 and type_var ast env =
        match ast with
             Var s -> let entry = env s in 
@@ -110,10 +116,8 @@ and type_exp ast env =
         match ast with
             VarExp s -> type_var s env
           | IntExp i -> INT
-          | CallFunc ("++", [arg]) -> 
-               (check_int (type_exp arg env); INT)
-          | CallFunc ("+=", [left; right]) ->
-               (check_int (type_exp left env); check_int(type_exp right env); INT)
+          | Incr v -> 
+               (check_int (type_var v env); INT)
           | CallFunc ("+", [left; right]) -> 
                (check_int (type_exp left env); check_int(type_exp right env); INT)
           | CallFunc ("-", [left; right]) -> 
