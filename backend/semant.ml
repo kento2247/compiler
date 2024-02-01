@@ -101,6 +101,8 @@ and type_stmt ast env =
           | AddEq (v, e) -> 
                if (type_var v env) != INT then raise (TypeErr "type error 4");
                if (type_exp e env) != INT then raise (TypeErr "type error 4");
+          | Incr v -> 
+               check_int (type_var v env);
 and type_var ast env =
        match ast with
             Var s -> let entry = env s in 
@@ -116,8 +118,6 @@ and type_exp ast env =
         match ast with
             VarExp s -> type_var s env
           | IntExp i -> INT
-          | Incr v -> 
-               (check_int (type_var v env); INT)
           | CallFunc ("+", [left; right]) -> 
                (check_int (type_exp left env); check_int(type_exp right env); INT)
           | CallFunc ("-", [left; right]) -> 

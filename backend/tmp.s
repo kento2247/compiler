@@ -97,11 +97,35 @@ L4:	.string "\n"
 	leaq L4(%rip), %rdi
 	movq $0, %rax
 	callq printf
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	movq (%rax), %rbx
+	addq $1, (%rax)
+	pushq %rbx
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	movq (%rax), %rbx
+	addq $1, (%rax)
+	pushq %rbx
+	movq %rbp, %rax
+	leaq -16(%rax), %rax
+	movq (%rax), %rax
+	pushq %rax
+	popq  %rsi
+	leaq IO(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	.data
+L5:	.string "\n"
+	.text
+	leaq L5(%rip), %rdi
+	movq $0, %rax
+	callq printf
 	pushq $0
 	movq %rbp, %rax
 	leaq -16(%rax), %rax
 	popq (%rax)
-L6:
+L7:
 	subq $16, %rsp
 	movq %rbp, %rax
 	leaq -16(%rax), %rax
@@ -122,9 +146,9 @@ L6:
 	movq $0, %rax
 	callq printf
 	.data
-L7:	.string "\n"
+L8:	.string "\n"
 	.text
-	leaq L7(%rip), %rdi
+	leaq L8(%rip), %rdi
 	movq $0, %rax
 	callq printf
 	movq %rbp, %rax
@@ -135,8 +159,8 @@ L7:	.string "\n"
 	popq %rax
 	popq %rbx
 	cmpq %rax, %rbx
-	jge L5
-	jmp L6
-L5:
+	jge L6
+	jmp L7
+L6:
 	leaveq
 	retq

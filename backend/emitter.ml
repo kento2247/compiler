@@ -169,6 +169,12 @@ and trans_stmt ast nest tenv env =
                         ^ trans_var v nest env
                         ^ "\tpopq %rbx\n"
                         ^ "\taddq %rbx, (%rax)\n"
+                  (* ++のコード *)
+                  | Incr v ->
+                        trans_var v nest env
+                        ^ "\tmovq (%rax), %rbx\n"
+                        ^ "\taddq $1, (%rax)\n"
+                        ^ "\tpushq %rbx\n"
 (* 参照アドレスの処理 *)
 and trans_var ast nest env = match ast with
                    Var s -> let entry = env s in 
@@ -246,13 +252,6 @@ and trans_exp ast nest env = match ast with
                                           ^ "\tjmp factorial_loop" ^ string_of_int nest ^ "\n"
                                           ^ "factorial_end" ^ string_of_int nest ^ ":\n"
                                           ^ "\tpushq %rdx\n"
-                  (* ++のコード *)
-                  | Incr v ->
-                        trans_var v nest env
-                        ^ "\tpopq %rax\n"
-                        ^ "\tmovq (%rax), %rbx\n"
-                        ^ "\tincq %rax\n"
-                        ^ "\tpushq %rbx\n"
                   
 
                   (* 反転のコード *)

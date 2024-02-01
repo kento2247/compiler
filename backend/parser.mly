@@ -78,6 +78,7 @@ stmt : ID ASSIGN expr SEMI    { Assign (Var $1, $3) }
      | block { $1 }
      | SEMI { NilStmt }
      | ID ADD_EQ expr SEMI { AddEq ((Var $1), $3) }
+     | ID INC { Incr (Var $1) }
      ;
 
 aargs_opt: /* empty */     { [] }
@@ -95,7 +96,6 @@ expr : NUM { IntExp $1  }
      | ID { VarExp (Var $1) }
      | ID LP aargs_opt RP { CallFunc ($1, $3) } 
      | ID LS expr RS  { VarExp (IndexedVar (Var $1, $3)) }
-     | ID INC { Incr (Var $1) }
      | expr PLUS expr { CallFunc ("+", [$1; $3]) }
      | expr MINUS expr { CallFunc ("-", [$1; $3]) }
      | expr TIMES expr { CallFunc ("*", [$1; $3]) }
