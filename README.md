@@ -20,7 +20,7 @@
 - [x] 3. ^の実装
 - [ ] 4. ++の実装
 - [ ] 5. +=の実装
-- [ ] 6. do while の実装
+- [x] 6. do while の実装
 - [ ] 7. for の実装
 - [ ] 8. return 時の型検査の実装
 
@@ -93,14 +93,15 @@
                             ^ "\tidivq %rbx\n"
                             ^ "\tpushq %rdx\n"
      ```
-   - lexer.mll に以下のコードを追加
+   - lexer.mll の rule に以下のコードを追加
      ```ocaml
      | "%"                     { MOD }
      ```
-   - parser.mly のに以下のコードを追加
+   - parser.mly に以下のコードを追加
      ```ocaml
      %token MOD
      ...
+     stmt: ...
      | expr MOD expr { CallFunc ("%", [$1; $3]) }
      ```
    - semant.ml の type_exp に以下のコードを追加
@@ -130,14 +131,15 @@
                                           ^ "factorial_end" ^ string_of_int nest ^ ":\n"
                                           ^ "\tpushq %rdx\n"
      ```
-   - lexer.mll に以下のコードを追加
+   - lexer.mll の rule に以下のコードを追加
      ```ocaml
      | "^"                     { POW }
      ```
-   - parser,mly に以下のコードを追加
+   - parser.mly に以下のコードを追加
      ```ocaml
      %token POW
      ...
+     stmt: ...
      | expr POW expr { CallFunc ("^", [$1; $3]) }
      ```
    - semant.ml の type_exp に以下のコードを追加
@@ -147,55 +149,109 @@
      ```
 4. ++の実装
 
-   - emitter.ml に以下のコードを追加
+   - emitter.ml の trans_stmt に以下のコードを追加
 
      ```ocaml
      (* ++のコード *)
+                  | Incr v ->
+                        trans_var v nest env
+                        ^ "\tmovq (%rax), %rbx\n"
+                        ^ "\taddq $1, (%rax)\n"
+                        ^ "\tpushq %rbx\n"
 
      ```
 
-   - lexer.mll に以下のコードを追加
+   - lexer.mll の rule に以下のコードを追加
      ```ocaml
-     | "++"                     { INC }
+     | "++"                    { INC }
      ```
-   - parser.mly のに以下のコードを追加
+   - parser.mly に以下のコードを追加
      ```ocaml
      %token INC
      ...
-     | expr INC { CallFunc ("++", [$1]) }
+     stmt: ...
+     | ID INC { Incr (Var $1) }
      ```
-   - semant.ml の type_exp に以下のコードを追加
+   - semant.ml の type_stmt に以下のコードを追加
      ```ocaml
-     | CallFunc ("++", [arg]) ->
-               (check_int (type_exp arg env); INT)
+     | Incr v ->
+               check_int (type_var v env);
+     ```
+   - ast.ml の stmt に以下のコードを追加
+     ```ocaml
+     | Incr of var
      ```
 
 5. +=の実装
 
-   - emitter.ml に以下のコードを追加
+   - emitter.ml の trans_stmt に以下のコードを追加
 
      ```ocaml
      (* +=のコード *)
+                  | AddEq (v, e) ->
+                        trans_exp e nest env
+                        ^ trans_var v nest env
+                        ^ "\tpopq %rbx\n"
+                        ^ "\taddq %rbx, (%rax)\n"
 
      ```
 
-   - lexer.mll に以下のコードを追加
+   - lexer.mll の rule に以下のコードを追加
      ```ocaml
      | "+="                     { ADD_EQ }
      ```
-   - parser.mly のに以下のコードを追加
+   - parser.mly に以下のコードを追加
      ```ocaml
      %token ADD_EQ
      ...
+     stmt: ...
      | expr ADD_EQ { CallFunc ("+=", [$1; $3]) }
      ```
-   - semant.ml の type_exp に以下のコードを追加
+   - semant.ml の type_stmt に以下のコードを追加
      ```ocaml
-     | CallFunc ("+=", [left; right]) ->
-               (check_int (type_exp left env); check_int(type_exp right env); INT)
+     | AddEq (v, e) ->
+               if (type_var v env) != INT then raise (TypeErr "type error 4");
+               if (type_exp e env) != INT then raise (TypeErr "type error 4");
+     ```
+   - ast.ml の stmt に以下のコードを追加
+     ```ocaml
+     | AddEq of var * exp
      ```
 
 6. do while の実装
+
+   - emitter.ml に以下のコードを追加
+
+     ```ocaml
+     (* do while文のコード *)
+                  | DoWhile (e,s) -> let (condCode, l1) = trans_cond e nest env in
+                                     let l2 = incLabel() in
+                                         sprintf "L%d:\n" l2
+                                       ^ trans_stmt s nest tenv env
+                                       ^ condCode
+                                       ^ sprintf "\tjmp L%d\n" l2
+                                       ^ sprintf "L%d:\n" l1
+     ```
+
+   - lexer.mll の rule に以下のコードを追加
+     ```ocaml
+     | "do"                    { DO }
+     ```
+   - parser.mly に以下のコードを追加
+     ```ocaml
+     %token DO
+     ...
+     stmt: ...
+     | DO stmt WHILE LP cond RP { DoWhile ($5, $2) }
+     ```
+   - semant.ml の type_stmt に以下のコードを追加
+     ```ocaml
+     | DoWhile (e,_) -> type_cond e env
+     ```
+   - ast.ml の stmt に以下のコードを追加
+     ```ocaml
+     | DoWhile of exp * stmt
+     ```
 
 7. for の実装
 
