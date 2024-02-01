@@ -292,8 +292,8 @@
      ...
      | ".."                    { TO }
      ```
-     > [!NOTE]  
-     > ".."の宣言位置が FOR の直後だと、なぜか実行時に segmentation fault した。そのため SEMI の直後に移動した。
+> [!NOTE]  
+> ".."の宣言位置が FOR の直後だと、なぜか実行時に segmentation fault した。そのため SEMI の直後に移動した。
    - parser.mly に以下のコードを追加
      ```ocaml
      %token FOR
