@@ -48,6 +48,7 @@ rule lexer = parse
 | ')'                     { RP  }
 | ','                     { COMMA }
 | ';'                     { SEMI }
+| ".."                    { TO }
 | '\n'                    { incr line_num; lexer lexbuf; }
 | [' ' '\t']              { lexer lexbuf } (* eat up whitespace *)
 | eof                     { raise End_of_file }

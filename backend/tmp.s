@@ -162,5 +162,36 @@ L8:	.string "\n"
 	jge L6
 	jmp L7
 L6:
+	pushq $0
+	movq %rbp, %rax
+	leaq -8(%rax), %rax
+	popq (%rax)
+L9:
+	pushq $5
+	popq %rbx
+	movq %rbp, %rax
+	leaq -8(%rax), %rax
+	cmpq (%rax), %rbx
+	je L10
+	subq $16, %rsp
+	movq %rbp, %rax
+	leaq -8(%rax), %rax
+	movq (%rax), %rax
+	pushq %rax
+	popq  %rsi
+	leaq IO(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	.data
+L11:	.string "\n"
+	.text
+	leaq L11(%rip), %rdi
+	movq $0, %rax
+	callq printf
+	movq %rbp, %rax
+	leaq -8(%rax), %rax
+	addq $1, (%rax)
+	jmp L9
+L10:
 	leaveq
 	retq

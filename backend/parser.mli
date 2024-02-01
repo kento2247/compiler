@@ -38,6 +38,7 @@ type token =
   | ADD_EQ
   | DO
   | FOR
+  | TO
 
 val prog :
   (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> Ast.stmt

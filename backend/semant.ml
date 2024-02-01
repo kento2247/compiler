@@ -97,6 +97,11 @@ and type_stmt ast env =
           | If (e,_,_) -> type_cond e env
           | While (e,_) -> type_cond e env
           | DoWhile (e,_) -> type_cond e env
+          | For (v, e1, e2, s) -> 
+               if (type_var v env) != INT then raise (TypeErr "type error 4");
+               if (type_exp e1 env) != INT then raise (TypeErr "type error 4");
+               if (type_exp e2 env) != INT then raise (TypeErr "type error 4");
+               type_stmt s env
           | NilStmt -> ()
           | AddEq (v, e) -> 
                if (type_var v env) != INT then raise (TypeErr "type error 4");
