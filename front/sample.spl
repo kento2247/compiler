@@ -1,0 +1,18 @@
+{
+   int[10] arr;
+   int x;
+   int func(int arg) {
+      int i;
+      i = 0;
+      while (i < 10) {
+         arr[i] = i * arg;
+         i = i + 1;
+      }
+      return arr[5];
+   }
+
+   new(arr);
+   x = func(3);
+   iprint(x);
+   sprint("\n");
+}
