@@ -24,7 +24,7 @@
 - [x] 5. +=の実装
 - [x] 6. do while の実装
 - [x] 7. for の実装
-- [ ] 8. return 時の型検査の実装
+- [x] 8. return 時の型検査の実装
 
 ## 3. Frontend
 
