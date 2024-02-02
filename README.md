@@ -1,11 +1,13 @@
 # コンパイラ構成論 第二回演習
 
-<div style="text-align: right;">
-学籍番号: 62112607<br>
+学籍番号: 62112607  
 氏名: 戸倉健登
-</div>
 
-## 0. 回答状況
+## 1. ソースコード
+
+[github](https://github.com/kento2247/compiler)
+
+## 2. 回答状況
 
 ### Frontend
 
@@ -24,7 +26,7 @@
 - [x] 7. for の実装
 - [ ] 8. return 時の型検査の実装
 
-## 1. Frontend
+## 3. Frontend
 
 1.  //で単行コメントアウト
 
@@ -36,7 +38,8 @@
 
     - 実行結果
 
-      ```
+      ```c
+      // sample.spl
       {
         int x, rlt;
         // int y = 0;
@@ -77,7 +80,8 @@
           ```
         - 実行結果
 
-          ```
+          ```c
+          // sample.spl
           {
             int x, rlt;
             // int y = 0;
@@ -108,30 +112,31 @@
                             print_string "\n"
                         with
                                 | Parsing.Parse_error -> print_string (Printf.sprintf "Syntax error at line %d, before \"%s\"\n" !Lexer.line_num (Lexing.lexeme lexbuf)
-          let \_ = main ()
+          let _ = main ()
           ```
 
-          - try with で lexbuf が必要なので、main()全体に try with をせず、ast_stmt()の呼び出しに try with をした
-          - 実行結果
+        - try with で lexbuf が必要なので、main()全体に try with をせず、ast_stmt()の呼び出しに try with をした
+        - 実行結果
 
-            ```
-            {
-              int x, rlt;
-              // int y = 0;
+          ```c
+          // sample.spl
+          {
+            int x, rlt;
+            // int y = 0;
 
-              x = 1
-            }
-            ```
+            x = 1
+          }
+          ```
 
-            ```bash
-            [ub465982@logex01 front]$ ./print_ast ../sample.spl
-            Syntax error at line 6, before "}"
-            ```
+          ```bash
+          [ub465982@logex01 front]$ ./print_ast ../sample.spl
+          Syntax error at line 6, before "}"
+          ```
 
 3.  error トークンの挿入  
     未着手
 
-## 2. Backend
+## 4. Backend
 
 1. MOD の実装
 
@@ -147,6 +152,7 @@
                             ^ "\tidivq %rbx\n"
                             ^ "\tpushq %rdx\n"
      ```
+     - pushq %rdx で余りをスタックに積むようにしただけ
    - lexer.mll の rule に以下のコードを追加
      ```ocaml
      | "%"                     { MOD }
@@ -165,7 +171,8 @@
      ```
    - 実行結果
 
-     ```
+     ```c
+      // sample.spl
      {
        int rlt;
 
@@ -221,7 +228,8 @@
      ```
    - 実行結果
 
-     ```
+     ```c
+      // sample.spl
      {
        int rlt;
 
@@ -273,7 +281,8 @@
      ```
    - 実行結果
 
-     ```
+     ```c
+      // sample.spl
      {
        int rlt;
 
@@ -318,8 +327,8 @@
    - semant.ml の type_stmt に以下のコードを追加
      ```ocaml
      | AddEq (v, e) ->
-               if (type_var v env) != INT then raise (TypeErr "type error 4");
-               if (type_exp e env) != INT then raise (TypeErr "type error 4");
+               if (type_var v env) != INT then raise (TypeErr "TypeErr: type error 4");
+               if (type_exp e env) != INT then raise (TypeErr "TypeErr: type error 4");
      ```
    - ast.ml の stmt に以下のコードを追加
      ```ocaml
@@ -327,7 +336,8 @@
      ```
    - 実行結果
 
-     ```
+     ```c
+      // sample.spl
      {
        int rlt;
 
@@ -359,6 +369,8 @@
                                        ^ sprintf "L%d:\n" l1
      ```
 
+     - While と比較すると、trans_stmt の位置、すなわち stmt の実行タイミングが異なる。condCode を実行すると条件判定の結果がレジスタに格納されるので、その前に trans_stmt を実行する必要がある
+
    - lexer.mll の rule に以下のコードを追加
      ```ocaml
      | "do"                    { DO }
@@ -380,7 +392,8 @@
      ```
    - 実行結果
 
-     ```
+     ```c
+      // sample.spl
      {
        int rlt;
 
@@ -453,9 +466,9 @@
    - semant.ml の type_stmt に以下のコードを追加
      ```ocaml
      | For (v, e1, e2, s) ->
-               if (type_var v env) != INT then raise (TypeErr "type error 4");
-               if (type_exp e1 env) != INT then raise (TypeErr "type error 4");
-               if (type_exp e2 env) != INT then raise (TypeErr "type error 4");
+               if (type_var v env) != INT then raise (TypeErr "TypeErr: type error 4");
+               if (type_exp e1 env) != INT then raise (TypeErr "TypeErr: type error 4");
+               if (type_exp e2 env) != INT then raise (TypeErr "TypeErr: type error 4");
                type_stmt s env
      ```
    - ast.ml の stmt に以下のコードを追加
@@ -464,7 +477,8 @@
      ```
    - 実行結果
 
-     ```
+     ```c
+     // sample.spl
      {
        int rlt;
 
@@ -483,5 +497,69 @@
      2
      ```
 
-8. return 時の型検査の実装  
-   未着手
+8. return 時の型検査の実装
+
+   - 方針
+     - 関数の戻り値型を管理するスタックを用意し、関数の戻り値型をスタックに追加する
+     - return 文が呼ばれたときに、スタックから戻り値型を取り出し、実際の戻り値型と比較する
+   - semant.ml に以下のスタックと関数を追加
+     ```ocaml
+     (* 関数の戻り値型を管理するスタック *)
+     let return_types_stack : ty option list ref = ref []
+     (* 関数戻り値型スタックの操作 *)
+     let push_return_type ty =
+       return_types_stack := Some ty :: !return_types_stack
+     let pop_return_type () =
+       match !return_types_stack with
+       | hd :: tl -> return_types_stack := tl; hd
+       | [] -> None
+     ```
+   - semant.ml の type_stmt に以下のコードを追加
+     ```ocaml
+      | CallProc ("return", [arg]) ->
+          let actual_return_type = type_exp arg env in
+          let expected_return_type_opt = pop_return_type () in
+          (match expected_return_type_opt with
+              | Some expected_return_type ->
+                    if actual_return_type != expected_return_type then
+                    raise (TypeErr "TypeErr: return type mismatch")
+              | None -> raise (TypeErr "TypeErr: unexpected return statement"))
+     ```
+   - semant.ml の type_dec の FuncDec 以を下のコードに修正
+     ```ocaml
+     FuncDec (s, l, rlt, Block (dl,_)) ->
+         (* 関数名の記号表への登録 *)
+         check_redecl ((List.map (fun (t,s) -> VarDec (t,s)) l) @ dl) [] [];
+         let env' = update s (FunEntry
+                                 {formals=
+                                    List.map (fun (typ,_) -> create_ty typ tenv) l;
+                                    result=create_ty rlt tenv; level=nest+1})
+                    env in
+                    (* 戻り値型をスタックに追加 *)
+                    push_return_type (create_ty rlt tenv);
+                    (tenv, env', addr)
+     ```
+     - (tenv, env', addr)を戻り値にするのは確定なので、その前に push_return_type を呼び出す
+   - 実行結果
+
+     ```c
+     // sample.spl
+     {
+       int[10] arr;
+       int x;
+
+       int func(int arg) {
+           return arr;
+       }
+
+       new(arr);
+       x = func(3);
+       iprint(x);
+       sprint("\n");
+     }
+     ```
+
+     ```bash
+     [ub465982@logex01 backend]$ ./simc ../sample.spl
+     TypeErr: return type mismatch
+     ```

@@ -1,38 +1,12 @@
 {
-   int x, rlt;
-
-   //MOD
-   rlt = 5%2;
-   iprint(rlt);
-   sprint("\n");
-
-   //^
-   rlt = 5^2;
-   iprint(rlt);
-   sprint("\n");
-
-   //+=
-   rlt += 2;
-   iprint(rlt);
-   sprint("\n");
-
-   //++
-   rlt++;
-   rlt++;
-   iprint(rlt);
-   sprint("\n");
-
-   //do while
-   rlt = 0;
-   do{
-      rlt = rlt + 1;
-      iprint(rlt);
-      sprint("\n");
-   }while(rlt < 5);
-
-   //for
-   for (x = 0 .. 5) {
-      iprint(x);
-      sprint("\n");
+   int[10] arr;
+   int x;
+   int func(int arg) {
+      return arg * 2;
    }
+
+   new(arr);
+   x = func(3);
+   iprint(x);
+   sprint("\n");
 }

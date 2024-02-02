@@ -5,6 +5,17 @@ open Table
 exception Err of string
 exception TypeErr of string
 
+(* 関数の戻り値型を管理するスタック *)
+let return_types_stack : ty option list ref = ref []
+(* 関数戻り値型スタックの操作 *)
+let push_return_type ty =
+  return_types_stack := Some ty :: !return_types_stack
+let pop_return_type () =
+  match !return_types_stack with
+  | hd :: tl -> return_types_stack := tl; hd
+  | [] -> None
+  
+  
 let rec calc_size ty = match ty with
                    ARRAY (n, t, _) -> n * (calc_size t)
                  | INT -> 8
@@ -15,30 +26,33 @@ let actual_ty ty =
       match t with 
          NAME (s, tyref) -> 
              (match !tyref with 
-                Some actty -> if List.mem actty l then raise (TypeErr "cyclic type definition")
+                Some actty -> if List.mem actty l then raise (TypeErr "TypeErr: cyclic type definition")
                               else travTy (actty) (actty::l)
-              | None -> raise (TypeErr "no actual type"))
+              | None -> raise (TypeErr "TypeErr: no actual type"))
        | _ -> t
    in travTy ty [ty]
 
-let check_int ty = if ty != INT then raise (TypeErr "type error 1")
+let check_int ty = if ty != INT then raise (TypeErr "TypeErr: type error 1")
 
 let check_array ty = 
           match ty with
              ARRAY _ -> ()
-           | _ -> raise (TypeErr "type error 2")
+           | _ -> raise (TypeErr "TypeErr: type error 2")
 
 exception SymErr of string
 let rec check_redecl decs tl vl = 
      match decs with
          [] -> ()
-       | FuncDec (s,_,_,_)::rest -> if List.mem s vl then raise (SymErr s)
-                                    else check_redecl rest tl (s::vl) 
+       | FuncDec (s, args, ret_type, block)::rest -> 
+                              if List.mem s vl 
+                                   then raise (SymErr s)
+                              else check_redecl rest tl (s::vl) 
        | VarDec (_,s)::rest -> if List.mem s vl then raise (SymErr s)
                                else check_redecl rest tl (s::vl) 
        | TypeDec (s,_)::rest -> if List.mem s tl then raise (SymErr s)
                                 else check_redecl rest (s::tl) vl 
-       | Assign (_, _)::rest -> ()
+       | AssignVarDec (_,s,_)::rest -> if List.mem s vl then raise (SymErr s)
+                                      else check_redecl rest tl (s::vl)
 (* 型式の生成 *)
 let rec create_ty ast tenv =
     match ast with
@@ -59,17 +73,18 @@ let rec type_dec ast (nest,addr) tenv env =
          let env' = update s (FunEntry 
                                  {formals= 
                                     List.map (fun (typ,_) -> create_ty typ tenv) l; 
-                                    result=create_ty rlt tenv; level=nest+1}) env in (tenv, env', addr)
+                                    result=create_ty rlt tenv; level=nest+1}) 
+                    env in
+                    (* 戻り値型をスタックに追加 *)
+                    push_return_type (create_ty rlt tenv);
+                    (tenv, env', addr)
     (* 変数宣言の処理 *)
     | VarDec (t,s) -> (tenv, 
               update s (VarEntry {ty= create_ty t tenv; offset=addr-8; level=nest}) env, addr-8)
-    | Assign (v, e) -> 
-               if (type_var v env) != (type_exp e env) 
-               then raise (TypeErr "type error 4");
-               (tenv, env, addr)
     (* 型宣言の処理 *)
     | TypeDec (s,t) -> let tenv' = update s (NAME (s,ref None)) tenv in (tenv', env, addr)
-    | _ -> raise (Err "internal error")
+    | AssignVarDec (t,s,e) -> (tenv, 
+              update s (VarEntry {ty= create_ty t tenv; offset=addr-8; level=nest}) env, addr-8)
 and type_decs dl nest tenv env =
          List.fold_left 
                 (fun (tenv,env,addr) d ->  type_dec d (nest,addr) tenv env) (tenv,env,0) dl
@@ -82,11 +97,18 @@ and type_stmt ast env =
        match ast with
             CallProc ("scan", [arg]) ->
                     if (type_exp arg env) != INT then 
-                          raise (TypeErr "type error 3")
+                          raise (TypeErr "TypeErr: type error 3")
           | CallProc ("iprint", [arg]) -> 
                     if (type_exp arg env) != INT then
-                          raise (TypeErr "iprint requires int value")
-          | CallProc ("return", [arg]) -> () (* result type should be checked *)
+                          raise (TypeErr "TypeErr: iprint requires int value")
+          | CallProc ("return", [arg]) ->
+               let actual_return_type = type_exp arg env in
+               let expected_return_type_opt = pop_return_type () in
+               (match expected_return_type_opt with
+                    | Some expected_return_type ->
+                         if actual_return_type != expected_return_type then
+                         raise (TypeErr "TypeErr: return type mismatch")
+                    | None -> raise (TypeErr "TypeErr: unexpected return statement"))
           | CallProc ("sprint", _) -> ()
           | CallProc ("new", [VarExp (Var s)]) -> let entry = env s in 
                     (match entry with
@@ -96,19 +118,19 @@ and type_stmt ast env =
                     let _ = type_exp (CallFunc (s, el)) env in ()
           | Block (dl, _) -> check_redecl dl [] []
           | Assign (v, e) -> 
-               if (type_var v env) != (type_exp e env) then raise (TypeErr "type error 4")
+               if (type_var v env) != (type_exp e env) then raise (TypeErr "TypeErr: type error 4")
           | If (e,_,_) -> type_cond e env
           | While (e,_) -> type_cond e env
           | DoWhile (e,_) -> type_cond e env
           | For (v, e1, e2, s) -> 
-               if (type_var v env) != INT then raise (TypeErr "type error 4");
-               if (type_exp e1 env) != INT then raise (TypeErr "type error 4");
-               if (type_exp e2 env) != INT then raise (TypeErr "type error 4");
+               if (type_var v env) != INT then raise (TypeErr "TypeErr: type error 4");
+               if (type_exp e1 env) != INT then raise (TypeErr "TypeErr: type error 4");
+               if (type_exp e2 env) != INT then raise (TypeErr "TypeErr: type error 4");
                type_stmt s env
           | NilStmt -> ()
           | AddEq (v, e) -> 
-               if (type_var v env) != INT then raise (TypeErr "type error 4");
-               if (type_exp e env) != INT then raise (TypeErr "type error 4");
+               if (type_var v env) != INT then raise (TypeErr "TypeErr: type error 4");
+               if (type_exp e env) != INT then raise (TypeErr "TypeErr: type error 4");
           | Incr v -> 
                check_int (type_var v env);
 and type_var ast env =
@@ -121,7 +143,7 @@ and type_var ast env =
                     (check_int (type_exp size env);
                      match type_var v env with
                              ARRAY (_,ty,_) -> (actual_ty ty)
-                        |  _ -> raise (TypeErr "type error 5"))
+                        |  _ -> raise (TypeErr "TypeErr: type error 5"))
 and type_exp ast env = 
         match ast with
             VarExp s -> type_var s env
@@ -149,8 +171,8 @@ and type_exp ast env =
                              and apTyl = List.map (fun e -> type_exp e env) el in
                                 let l = List.combine fpTyl' apTyl in 
                                     if List.for_all (fun (f,a) -> f == a) l then actual_ty rltTy
-                                    else raise (TypeErr "type error 6")
-                        else raise (TypeErr "type error 7")
+                                    else raise (TypeErr "TypeErr: type error 6")
+                        else raise (TypeErr "TypeErr: type error 7")
                    | _ -> raise (No_such_symbol s))
           | _ -> raise (Err "internal error")
 and type_cond ast env =  
