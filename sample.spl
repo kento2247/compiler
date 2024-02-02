@@ -1,12 +1,6 @@
 {
    int x, rlt;
 
-
-   //印字
-   rlt = 1;
-   iprint(rlt);
-   sprint("\n");
-
    //MOD
    rlt = 5%2;
    iprint(rlt);

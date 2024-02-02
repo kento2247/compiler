@@ -32,13 +32,6 @@ type token =
   | COMMA
   | TYPE
   | VOID
-  | MOD
-  | POW
-  | INC
-  | ADD_EQ
-  | DO
-  | FOR
-  | TO
 
 val prog :
   (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> Ast.stmt

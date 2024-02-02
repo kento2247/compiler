@@ -9,8 +9,6 @@
 
 ### Frontend
 
-     | INT ID ASSIGN expr SEMI { [VarDec (IntTyp, [$2, $4]); Assign (Var $2, $4)]}
-
 - [x] 1. 単行コメントアウト
 - [x] 2. 構文エラー時に行番号と直後の字句を印字
 - [ ] 3. error トークンの挿入
@@ -28,16 +26,34 @@
 
 ## 1. Frontend
 
-1.  //で単行コメントアウト  
-    以下のコードを lexer.mll に追加
+1.  //で単行コメントアウト
 
-```ocaml
-| "//"[^'\n']*            { lexer lexbuf }
-```
+    - 以下のコードを lexer.mll に追加
+
+      ```ocaml
+      | "//"[^'\n']*            { lexer lexbuf }
+      ```
+
+    - 実行結果
+
+      ```
+      {
+        int x, rlt;
+        // int y = 0;
+
+        x = 1;
+      }
+      ```
+
+      ```bash
+      [ub465982@logex01 front]$ ./print_ast ../sample.spl
+      Block([VarDec(IntTyp,"x"); VarDec(IntTyp,"rlt")],[Assign(Var "x",IntExp(1))])
+      ```
 
 2.  構文エラー時に行番号と直後の字句を印字
 
     1.  未定義の token(#など)が出現した場合: lexer.mll を編集
+
         - 行数を管理する以下のコードを追加
           ```ocaml
           let line_num = ref 1
@@ -59,8 +75,27 @@
                                     raise (No_such_symbol message)
                                   }
           ```
+        - 実行結果
+
+          ```
+          {
+            int x, rlt;
+            // int y = 0;
+
+            %
+            x = 1;
+          }
+          ```
+
+          ```bash
+          [ub465982@logex01 front]$ ./print_ast ../sample.spl
+          Fatal error: exception Lexer.No_such_symbol("at line 5, before \"%\"\n")
+          ```
+
     2.  構文エラーが発生した場合
+
         - print_ast.ml の main()、および呼び出しを以下に変更
+
           ```ocaml
           let main () =
             (* The open of a file *)
@@ -75,9 +110,26 @@
                                 | Parsing.Parse_error -> print_string (Printf.sprintf "Syntax error at line %d, before \"%s\"\n" !Lexer.line_num (Lexing.lexeme lexbuf)
           let \_ = main ()
           ```
-          - try with で lexbuf が必要なので、main()全体に try with をせず、ast_stmt()の呼び出しに try with をした
 
-3.  error トークンの挿入
+          - try with で lexbuf が必要なので、main()全体に try with をせず、ast_stmt()の呼び出しに try with をした
+          - 実行結果
+
+            ```
+            {
+              int x, rlt;
+              // int y = 0;
+
+              x = 1
+            }
+            ```
+
+            ```bash
+            [ub465982@logex01 front]$ ./print_ast ../sample.spl
+            Syntax error at line 6, before "}"
+            ```
+
+3.  error トークンの挿入  
+    未着手
 
 ## 2. Backend
 
@@ -111,10 +163,28 @@
      | CallFunc ("%", [left; right]) ->
                (check_int (type_exp left env); check_int(type_exp right env); INT)
      ```
+   - 実行結果
+
+     ```
+     {
+       int rlt;
+
+       //MOD
+       rlt = 5%2;
+       iprint(rlt);
+       sprint("\n");
+     }
+     ```
+
+     ```bash
+     [ub465982@logex01 backend]$ ./run ../sample.spl
+     1
+     ```
 
 2. 変数宣言と初期化を同時に行う
 
 3. ^の実装
+
    - emitter.ml に以下のコードを追加
      ```ocaml
      (* %のコード *)
@@ -149,6 +219,24 @@
      | CallFunc ("^", [left; right]) ->
                (check_int (type_exp left env); check_int(type_exp right env); INT)
      ```
+   - 実行結果
+
+     ```
+     {
+       int rlt;
+
+       //POW
+       rlt = 2^3;
+       iprint(rlt);
+       sprint("\n");
+     }
+     ```
+
+     ```bash
+      [ub465982@logex01 backend]$ ./run ../sample.spl
+      8
+     ```
+
 4. ++の実装
 
    - emitter.ml の trans_stmt に以下のコードを追加
@@ -182,6 +270,24 @@
    - ast.ml の stmt に以下のコードを追加
      ```ocaml
      | Incr of var
+     ```
+   - 実行結果
+
+     ```
+     {
+       int rlt;
+
+       //++
+       rlt = 2;
+       rlt++;
+       iprint(rlt);
+       sprint("\n");
+     }
+     ```
+
+     ```bash
+     [ub465982@logex01 backend]$ ./run ../sample.spl
+     3
      ```
 
 5. +=の実装
@@ -219,6 +325,24 @@
      ```ocaml
      | AddEq of var * exp
      ```
+   - 実行結果
+
+     ```
+     {
+       int rlt;
+
+       //+=
+       rlt = 2;
+       rlt += 3;
+       iprint(rlt);
+       sprint("\n");
+     }
+     ```
+
+     ```bash
+      [ub465982@logex01 backend]$ ./run ../sample.spl
+      5
+     ```
 
 6. do while の実装
 
@@ -254,6 +378,28 @@
      ```ocaml
      | DoWhile of exp * stmt
      ```
+   - 実行結果
+
+     ```
+     {
+       int rlt;
+
+       //do while
+       rlt = 0;
+       do {
+         rlt++;
+         iprint(rlt);
+         sprint("\n");
+       } while (rlt < 3);
+     }
+     ```
+
+     ```bash
+      [ub465982@logex01 backend]$ ./run ../sample.spl
+      1
+      2
+      3
+     ```
 
 7. for の実装
 
@@ -287,13 +433,15 @@
        ```
 
    - lexer.mll の rule に以下のコードを追加
+
      ```ocaml
      | "for"                   { FOR }
      ...
      | ".."                    { TO }
      ```
-> [!NOTE]  
-> ".."の宣言位置が FOR の直後だと、なぜか実行時に segmentation fault した。そのため SEMI の直後に移動した。
+
+     > ".."の宣言位置が FOR の直後だと、なぜか実行時に segmentation fault した。そのため SEMI の直後に移動した。
+
    - parser.mly に以下のコードを追加
      ```ocaml
      %token FOR
@@ -314,5 +462,26 @@
      ```ocaml
      | For of var * exp * exp * stmt
      ```
+   - 実行結果
 
-8. return 時の型検査の実装
+     ```
+     {
+       int rlt;
+
+       //for
+       for (rlt = 0; rlt < 3; rlt++) {
+         iprint(rlt);
+         sprint("\n");
+       }
+     }
+     ```
+
+     ```bash
+     [ub465982@logex01 backend]$ ./run ../sample.spl
+     0
+     1
+     2
+     ```
+
+8. return 時の型検査の実装  
+   未着手
