@@ -1,0 +1,14 @@
+backend/*.cmi
+backend/*.cmo
+backend/parser.ml
+backend/lexer.ml
+backend/parser.mli
+backend/simc
+backend/print_ast
+*.out
+front/*.cmi
+front/*.cmo
+front/parser.ml
+front/lexer.ml
+front/parser.mli
+front/print_ast
