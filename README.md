@@ -189,6 +189,7 @@
      ```
 
 2. 変数宣言と初期化を同時に行う
+  未着手
 
 3. ^の実装
 
@@ -247,7 +248,7 @@
 
 4. ++の実装
 
-   - emitter.ml の trans_stmt に以下のコードを追加
+   - emitter.ml の trans_exp に以下のコードを追加
 
      ```ocaml
      (* ++のコード *)
@@ -267,15 +268,15 @@
      ```ocaml
      %token INC
      ...
-     stmt: ...
+     expr: ...
      | ID INC { Incr (Var $1) }
      ```
-   - semant.ml の type_stmt に以下のコードを追加
+   - semant.ml の type_exp に以下のコードを追加
      ```ocaml
      | Incr v ->
-               check_int (type_var v env);
+               (check_int (type_var v env); INT)
      ```
-   - ast.ml の stmt に以下のコードを追加
+   - ast.ml の exp に以下のコードを追加
      ```ocaml
      | Incr of var
      ```
