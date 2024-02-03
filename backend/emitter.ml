@@ -189,12 +189,6 @@ and trans_stmt ast nest tenv env =
                         ^ trans_var v nest env
                         ^ "\tpopq %rbx\n"
                         ^ "\taddq %rbx, (%rax)\n"
-                  (* ++のコード *)
-                  | Incr v ->
-                        trans_var v nest env
-                        ^ "\tmovq (%rax), %rbx\n"
-                        ^ "\taddq $1, (%rax)\n"
-                        ^ "\tpushq %rbx\n"
 (* 参照アドレスの処理 *)
 and trans_var ast nest env = match ast with
                    Var s -> let entry = env s in 
@@ -283,6 +277,12 @@ and trans_exp ast nest env = match ast with
                                  trans_stmt (CallProc(s, el)) nest initTable env 
                                  (* 返戻値は%raxに入れて返す *)
                                ^ "\tpushq %rax\n"
+                  (* ++のコード *)
+                  | Incr v ->
+                        trans_var v nest env
+                        ^ "\tmovq (%rax), %rbx\n"
+                        ^ "\taddq $1, (%rax)\n"
+                        ^ "\tpushq %rbx\n"
                   | _ -> raise (Err "internal error")
 (* 関係演算の処理 *)
 and trans_cond ast nest env = match ast with

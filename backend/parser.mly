@@ -83,7 +83,6 @@ stmt : ID ASSIGN expr SEMI    { Assign (Var $1, $3) }
      | block { $1 }
      | SEMI { NilStmt }
      | ID ADD_EQ expr SEMI { AddEq ((Var $1), $3) }
-     | ID INC { Incr (Var $1) }
      ;
 
 aargs_opt: /* empty */     { [] }
@@ -109,6 +108,7 @@ expr : NUM { IntExp $1  }
      | expr POW expr { CallFunc ("^", [$1; $3]) }
      | MINUS expr %prec UMINUS { CallFunc("!", [$2]) }
      | LP expr RP  { $2 }
+     | ID INC { Incr (Var $1) }
      ;
 
 cond : expr EQ expr  { CallFunc ("==", [$1; $3]) }
